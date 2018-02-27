@@ -14,7 +14,7 @@ use think\worker\Server;
 class Worker extends Server
 {
 //    protected $socket = 'tcp://0.0.0.0:2347';
-    protected $socket = 'ws://127.0.0.1:2346';
+    protected $socket = 'websocket://0.0.0.0:2346';
 
     /**
      * 收到信息
