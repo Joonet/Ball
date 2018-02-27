@@ -1,5 +1,6 @@
 <?php
 namespace app\index\controller;
+use think\worker\Server;
 
 class Index
 {
