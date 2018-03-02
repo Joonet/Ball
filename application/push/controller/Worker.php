@@ -13,8 +13,34 @@ use think\worker\Server;
 
 class Worker extends Server
 {
-//    protected $socket = 'tcp://0.0.0.0:2347';
-    protected $socket = 'websocket://127.0.0.1:2346';
+    protected $socket = 'tcp://0.0.0.0:2347';
+//    protected $socket = 'websocket://0.0.0.0:2346';
+
+
+    /**
+    ws = new WebSocket("ws://47.94.204.68:2346");
+    ws.onopen = function() {
+    alert("连接成功");
+    ws.send('tom');
+    alert("给服务端发送一个字符串：tom");
+    };
+    ws.onmessage = function(e) {
+    alert("收到服务端的消息：" + e.data);
+    };
+     */
+
+    /**
+     *
+     *
+     * 错误
+     * failed: Error in connection establishment: net::ERR_CONNECTION_TIMED_OUT
+     * Uncaught SyntaxError: Unexpected token
+     */
+
+
+
+
+
 
     /**
      * 收到信息
@@ -23,7 +49,7 @@ class Worker extends Server
      */
     public function onMessage($connection, $data)
     {
-        $connection->send('我收到你的信息了');
+        $connection->send('我收到你的信息了'.$data);
     }
 
     /**
@@ -41,6 +67,8 @@ class Worker extends Server
      */
     public function onClose($connection)
     {
+        $connection->send('协议连接已断开');
+//        echo("<script>console.log('我收到你的信息了');</script>");
 
     }
 
