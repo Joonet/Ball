@@ -16,6 +16,8 @@ class Worker extends Server
     protected $socket = 'tcp://0.0.0.0:2347';
 //    protected $socket = 'websocket://0.0.0.0:2346';
 
+    // 全局变量，保存当前进程的客户端连接数
+    private $connection_count = 0;
 
     /**
     ws = new WebSocket("ws://47.94.204.68:2346");
@@ -49,7 +51,7 @@ class Worker extends Server
      */
     public function onMessage($connection, $data)
     {
-        $connection->send('我收到你的信息了'.$data);
+        $connection->send('我收到你的信息了'.$data.'\n'.'当前连接数为：'.$this->connection_count);
     }
 
     /**
@@ -58,7 +60,8 @@ class Worker extends Server
      */
     public function onConnect($connection)
     {
-        echo 'jjjj';
+        // 有新的客户端连接时，连接数+1
+        ++$this->connection_count;
     }
 
     /**
@@ -67,6 +70,8 @@ class Worker extends Server
      */
     public function onClose($connection)
     {
+        // 客户端关闭时，连接数-1
+        $this->connection_count--;
         $connection->send('协议连接已断开');
 //        echo("<script>console.log('我收到你的信息了');</script>");
 
