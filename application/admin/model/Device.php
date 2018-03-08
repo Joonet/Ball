@@ -3,7 +3,7 @@ namespace app\admin\model;
 
 use think\Model;
 
-class device extends Model
+class Device extends Model
 {
 
 }

@@ -10,6 +10,8 @@
 namespace app\push\controller;
 
 use think\worker\Server;
+use app\admin\model\Device;
+use app\admin\model\Test;
 
 class Worker extends Server
 {
@@ -51,7 +53,13 @@ class Worker extends Server
      */
     public function onMessage($connection, $data)
     {
+        $test = Test::where('connection', $connection->id+5)->find();
+        $test->message = $data;
+        $test->name = $test->name;
+        $test->save();
         $connection->send('我收到你的信息了'.$data.'\n'.'当前连接数为：'.$this->connection_count);
+
+
     }
 
     /**
@@ -62,6 +70,11 @@ class Worker extends Server
     {
         // 有新的客户端连接时，连接数+1
         ++$this->connection_count;
+        $test = new Test();
+        $test->connection = $connection->id+5;
+        $test->name = 'Jo';
+        $test->save();
+        echo '连接';
     }
 
     /**
@@ -72,6 +85,9 @@ class Worker extends Server
     {
         // 客户端关闭时，连接数-1
         $this->connection_count--;
+        $test = Test::where('connection', $connection->id)->find();
+        $test->delete();
+//        echo '断开';
         $connection->send('协议连接已断开');
 //        echo("<script>console.log('我收到你的信息了');</script>");
 
@@ -85,6 +101,8 @@ class Worker extends Server
      */
     public function onError($connection, $code, $msg)
     {
+        $test = Test::where('connection', $connection->id)->find();
+        $test->delete();
         echo "error $code $msg\n";
     }
 
