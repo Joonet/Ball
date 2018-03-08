@@ -13,4 +13,10 @@ return [
         'model'      => ['game', 'gym', 'user'],
 //        'view'       => ['index/index', 'index/test'],
     ],
+    'admin' => [
+        '__dir__'   => ['controller', 'model', 'view'],
+        'controller'=> ['index'],
+        'model'     => ['device'],
+        'view'      => ['index/index', 'index/second'],
+    ]
 ];
