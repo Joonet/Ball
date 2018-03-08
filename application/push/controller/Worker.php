@@ -53,9 +53,8 @@ class Worker extends Server
      */
     public function onMessage($connection, $data)
     {
-        $test = Test::where('connection', $connection->id+5)->find();
+        $test = Test::where('connection', $connection->id)->find();
         $test->message = $data;
-        $test->name = $test->name;
         $test->save();
         $connection->send('我收到你的信息了'.$data.'\n'.'当前连接数为：'.$this->connection_count);
 
@@ -71,7 +70,7 @@ class Worker extends Server
         // 有新的客户端连接时，连接数+1
         ++$this->connection_count;
         $test = new Test();
-        $test->connection = $connection->id+5;
+        $test->connection = $connection->id;
         $test->name = 'Jo';
         $test->save();
         echo '连接';
@@ -101,8 +100,8 @@ class Worker extends Server
      */
     public function onError($connection, $code, $msg)
     {
-        $test = Test::where('connection', $connection->id)->find();
-        $test->delete();
+//        $test = Test::where('connection', $connection->id)->find();
+//        $test->delete();
         echo "error $code $msg\n";
     }
 
