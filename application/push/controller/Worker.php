@@ -26,17 +26,6 @@ class Worker extends Server
     // 全局变量，保存当前进程的客户端连接数
     private $connection_count = 0;
 
-    /**
-    ws = new WebSocket("ws://47.94.204.68:2346");
-    ws.onopen = function() {
-    alert("连接成功");
-    ws.send('tom');
-    alert("给服务端发送一个字符串：tom");
-    };
-    ws.onmessage = function(e) {
-    alert("收到服务端的消息：" + e.data);
-    };
-     */
 
     /**
      *
@@ -65,8 +54,10 @@ class Worker extends Server
         $test->message = $data;
         $test->save();
         $connection->send('我收到你的信息了'.$data.'\n'.'当前连接数为：'.$this->connection_count);
+        //解析data数据（json格式）
 
-
+        //获取液位值，若为1，则桶满，发送邮件
+//        $this->sendEmail();
     }
 
     /**
@@ -137,5 +128,20 @@ class Worker extends Server
                 }
             }
         });
+    }
+
+    /**
+     * 油箱满后邮件通知用户
+     */
+    private function sendEmail(){
+
+    }
+
+    /**
+     * @param $connection
+     * 向指定设备发送led灯闪亮控制命令
+     */
+    private function sendMessageToDevice($connection){
+
     }
 }
