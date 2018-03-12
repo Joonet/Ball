@@ -8,21 +8,9 @@ class Index
     public function index()
     {
 
-        $sendcloud=new \SendCloud("Jonet_test_tjXKtf", "89AUbwztLA8aFdKN",'v1');
-        $mail=new \Mail();
-        $mail->addBcc("lianzimi@ifaxin.com");
-        $mail->addCc("bida@ifaxin.com");
-        $mail->setFrom("test@test.com");
-        $mail->addTo("jo@precintl.com;elegzh@yeah.net");
-        $mail->setReplyTo("reply@test.com");
-        $mail->setFromName("来自测试发送");
-        $mail->setContent("这是一封测试邮件,请勿回复");
-        $mail->setSubject("测试");
-        $mail->setRespEmailId(true);
-        //添加多个邮件头
-//        $mail->addHeader("header1", "header2");
-//        $mail->addHeader("header2", "header2");
-        $sendcloud->sendCommon($mail);
+        $data = '{"id": "00C11350","ssid": "GoodAP","psw": "12345678","ip": "192.168.99.118","mac": "5C:CF:7F:C1:13:50","rssi": -32,"batmv": 1,"levpp": 0}';
+        $array = json_decode($data,true);
+        var_dump($array);
     }
 
     public function test(){

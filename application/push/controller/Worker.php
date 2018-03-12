@@ -64,13 +64,23 @@ class Worker extends Server
     {
         // 给connection临时设置一个lastMessageTime属性，用来记录上次收到消息的时间
         $connection->lastMessageTime = time();
+
+        $array = json_decode($data);
         //
-        $test = Test::where('connection', $connection->id)->find();
-        $test->message = $data;
-        $test->save();
+        $device = Device::where('ip', $connection->getRemoteIp())->find();
+        $device->unique_id = $array['id'];
+        $device->ssid = $array['ssid'];
+        $device->psw = $array['psw'];
+        $device->ip = $array['ip'];
+        $device->mac = $array['mac'];
+        $device->rssi = $array['rssi'];
+        $device->batmv = $array['batmv'];
+        $device->levpp = $array['levpp'];
+        $device->online = 1;
+        $device->save();
 
         //获取液位值，若为1，则桶满，发送邮件
-        if ($data == 1){
+        if ($array['levpp'] == 1){
 
             $this->send_mail();
             $connection->send('邮件已发送');
@@ -98,9 +108,15 @@ class Worker extends Server
 //        $test->connection = $connection->id;
 //        $test->name = 'Jo';
 //        $test->save();
-        $device = new Device();
-        $device->ip = $connection->getRemoteIp();
-        $device->save();
+        if (Device::where('ip', $connection->getRemoteIp())->find()){
+
+        }else{
+            $device = new Device();
+            $device->ip = $connection->getRemoteIp();
+            $device->save();
+        }
+
+
 
     }
 
