@@ -9,6 +9,8 @@
 //namespace app\api\controller;
 namespace app\push\controller;
 
+
+
 use think\worker\Server;
 use app\admin\model\Device;
 use app\admin\model\Test;
@@ -16,7 +18,7 @@ use Workerman\Lib\Timer;
 
 
 // 心跳间隔25秒
-define('HEARTBEAT_TIME', 20);
+define('HEARTBEAT_TIME', 120);
 class Worker extends Server
 {
 
@@ -44,6 +46,19 @@ class Worker extends Server
      * 收到信息
      * @param $connection
      * @param $data
+     *
+     * {
+    "id": "00C11350",  //全球唯一ID    unique_id
+    "ssid": "GoodAP",   //当前连接wifi的名字
+    "psw": "12345678",  //当前wifi的密码
+    "ip": "192.168.99.118", //当前连接的局域网IP
+    "mac": "5C:CF:7F:C1:13:50", //本机的MAC地址
+    "rssi": -32,    //当前连接wifi的信号强度
+    "batmv": 1,     //电池电压
+    "levpp": 0      //液位百分比
+    }
+     *
+     * online
      */
     public function onMessage($connection, $data)
     {
@@ -53,11 +68,20 @@ class Worker extends Server
         $test = Test::where('connection', $connection->id)->find();
         $test->message = $data;
         $test->save();
+
+        //获取液位值，若为1，则桶满，发送邮件
+        if ($data == 1){
+
+            $this->send_mail();
+            $connection->send('邮件已发送');
+
+        }
         $connection->send('我收到你的信息了'.$data.'\n'.'当前连接数为：'.$this->connection_count);
         //解析data数据（json格式）
 
-        //获取液位值，若为1，则桶满，发送邮件
-//        $this->sendEmail();
+
+
+
     }
 
     /**
@@ -70,11 +94,14 @@ class Worker extends Server
 
         // 有新的客户端连接时，连接数+1
         ++$this->connection_count;
-        $test = new Test();
-        $test->connection = $connection->id;
-        $test->name = 'Jo';
-        $test->save();
-        echo '连接';
+//        $test = new Test();
+//        $test->connection = $connection->id;
+//        $test->name = 'Jo';
+//        $test->save();
+        $device = new Device();
+        $device->ip = $connection->getRemoteIp();
+        $device->save();
+
     }
 
     /**
@@ -85,8 +112,8 @@ class Worker extends Server
     {
         // 客户端关闭时，连接数-1
         $this->connection_count--;
-        $test = Test::where('connection', $connection->id)->find();
-        $test->delete();
+        $device = Device::where('ip', $connection->getRemoteIp())->find();
+        $device->online = 0;
 //        echo '断开';
         $connection->send('协议连接已断开');
 //        echo("<script>console.log('我收到你的信息了');</script>");
@@ -133,8 +160,59 @@ class Worker extends Server
     /**
      * 油箱满后邮件通知用户
      */
-    private function sendEmail(){
+    private function send_mail() {
+        $url = 'http://api.sendcloud.net/apiv2/mail/send';
+        $API_USER = 'Jonet_test_tjXKtf';
+        $API_KEY = '89AUbwztLA8aFdKN';
 
+        $param = array(
+            'apiUser' => $API_USER, # 使用api_user和api_key进行验证
+            'apiKey' => $API_KEY,
+            'from' => 'jo@sendcloud.org', # 发信人，用正确邮件地址替代
+            'fromName' => 'PREC_Jo',
+            'to' => 'jo@precintl.com;elegzh@yeah.net;sky@precintl.com',# 收件人地址, 用正确邮件地址替代, 多个地址用';'分隔
+            'subject' => '油桶溢满警告_测试',
+            'html' => '<tbody>
+                         <tr>
+                             <td width="100%" height="70px" valign="middle">
+                                 <img style="margin-left:50px;" src="http://7xi9bi.com1.z0.glb.clouddn.com/35069/2015/07/20/1686ccdd7919429a8beeb4f3f15d5eb1.png" alt="logo">
+                             </td>
+                         </tr>
+                         <tr>
+                             <td align="center" valign="top">
+                                 <table width="465px" border="0" cellpadding="0" cellspacing="0" style="background:#fff;height:411px;">
+                                     <tbody><tr>
+                                         <td valign="top" align="center" style="color:#666;line-height:1.5">
+                                             <div style="width:360px;text-align:left;margin-top:50px;margin-bottom:80px;">
+                                                 <p>亲爱的用户您好：</p>
+                                                 <p style="text-indent:2em">
+                                                     欢迎您使用xxx平台，我们将为您提供优质的服务。在使用的过程中如有任何疑问或者建议请联系我们。
+                                                 </p>
+                                             </div>
+                                             <div style="border-top:1px dashed #ccc;margin:20px"></div>
+                                         </td>
+                                     </tr>
+                                   
+                                 </tbody></table>
+                             </td>
+                         </tr>
+                        </tbody>',
+            'respEmailId' => 'true'
+        );
+
+
+        $data = http_build_query($param);
+
+        $options = array(
+            'http' => array(
+                'method' => 'POST',
+                'header' => 'Content-Type: application/x-www-form-urlencoded',
+                'content' => $data
+            ));
+        $context  = stream_context_create($options);
+        $result = file_get_contents($url, FILE_TEXT, $context);
+
+        return $result;
     }
 
     /**
