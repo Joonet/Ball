@@ -19,21 +19,14 @@ class Index
     }
 
     public function test(){
-//        $sendcloud=new \SendCloud("Jonet_test_tjXKtf", "89AUbwztLA8aFdKN",'v2');
-//        $mail=new \Mail();
-//        $mail->addBcc("lianzimi@ifaxin.com");
-//        $mail->addCc("bida@ifaxin.com");
-//        $mail->setFrom("test@test.com");
-//        $mail->addTo("jo@precintl.com;elegzh@yeah.net");
-//        $mail->setFromName("来自测试发送");
-//        $mail->setSubject("测试");
-//        $mail->setContent("这是一封测试邮件,请勿回复");
-//        $mail->setRespEmailId(true);
-//        $mail->setLabel(14411);
-//        //添加多个邮件头
-//        $mail->addHeader("header1", "header1");
-//        $mail->addHeader("header2", "header2");
-//        $sendcloud->sendCommon($mail);
+        // 建立socket连接到内部推送端口1234567890
+        $client = stream_socket_client('tcp://127.0.0.1:5678');
+// 推送的数据，包含uid字段，表示是给这个uid推送
+        $data = array('uid'=>'uid1', 'percent'=>'88%');
+// 发送数据，注意5678端口是Text协议的端口，Text协议需要在数据末尾加上换行符
+        fwrite($client, json_encode($data)."\n");
+        // 读取推送结果
+        echo fread($client, 8192);
     }
 
     public function send_mail() {
@@ -96,4 +89,6 @@ blockquote{margin-right:0px}
 
         return $result;
     }
+
+
 }

@@ -64,7 +64,19 @@ class Worker extends Server
     {
         // 给connection临时设置一个lastMessageTime属性，用来记录上次收到消息的时间
         $connection->lastMessageTime = time();
-//        $arr = '{"id": "00C11350","ssid": "GoodAP","psw": "12345678","ip": "127.0.0.1","mac": "5C:CF:7F:C1:13:50","rssi": -32,"batmv": 1,"levpp": 0}';
+
+        // 判断当前客户端是否已经验证,既是否设置了uid
+        if(!isset($connection->uid))
+        {
+            // 没验证的话把第一个包当做uid（这里为了方便演示，没做真正的验证）
+            $connection->uid = $data;
+            /* 保存uid到connection的映射，这样可以方便的通过uid查找connection，
+             * 实现针对特定uid推送数据
+             */
+            $this->worker->uidConnections[$connection->uid] = $connection;
+            return;
+        }
+//        $arr = '{"id": "00C11350","ssid": "GoodAP","psw": "12345678","ip": "121.35.3.76","mac": "5C:CF:7F:C1:13:50","rssi": -32,"batmv": 1,"levpp": 0}';
         $array = json_decode($data,true);
         if(!$array){
             $connection->send('wrong msg format');
@@ -136,7 +148,11 @@ class Worker extends Server
         $device = Device::where('ip', $connection->getRemoteIp())->find();
         $device->online = 0;
         $device->save();
-//        echo '断开';
+        if(isset($connection->uid))
+        {
+            // 连接断开时删除映射
+            unset($this->worker->uidConnections[$connection->uid]);
+        }
         $connection->send('协议连接已断开');
 //        echo("<script>console.log('我收到你的信息了');</script>");
 
@@ -162,7 +178,29 @@ class Worker extends Server
     public function onWorkerStart($worker)
     {
 
-        // 进程启动后设置一个每秒运行一次的定时器
+        // 开启一个内部端口，方便内部系统推送数据，Text协议格式 文本+换行符
+        $inner_text_worker = new Worker('Text://0.0.0.0:5678');
+        $inner_text_worker->onMessage = function($connection, $buffer)
+        {
+            global $worker;
+            // $data数组格式，里面有uid，表示向那个uid的页面推送数据
+            $data = json_decode($buffer, true);
+            $uid = $data['uid'];
+            // 通过workerman，向uid的页面推送数据
+            $ret = $this->sendMessageByUid($uid, $buffer);
+            // 返回推送结果
+            $connection->send($ret ? 'ok' : 'fail');
+        };
+        $inner_text_worker->listen();
+
+        $this->addTimer($worker);
+    }
+
+    /**
+     * @param $worker
+     * 进程启动后设置一个每秒运行一次的定时器
+     */
+    private function addTimer($worker){
         Timer::add(1, function()use($worker){
             $time_now = time();
             foreach($worker->connections as $connection) {
@@ -239,10 +277,22 @@ class Worker extends Server
     }
 
     /**
-     * @param $connection
-     * 向指定设备发送led灯闪亮控制命令
+     * @param $uid
+     * @param $message
+     * @return bool
+     * 针对uid推送数据
      */
-    private function sendMessageToDevice($connection){
-
+    function sendMessageByUid($uid, $message)
+    {
+        global $worker;
+        if(isset($worker->uidConnections[$uid]))
+        {
+            $connection = $worker->uidConnections[$uid];
+            $connection->send($message);
+            return true;
+        }
+        return false;
     }
+
+
 }
