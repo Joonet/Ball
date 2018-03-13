@@ -64,8 +64,15 @@ class Worker extends Server
     {
         // 给connection临时设置一个lastMessageTime属性，用来记录上次收到消息的时间
         $connection->lastMessageTime = time();
-
-        $array = json_decode($data);
+//        $arr = '{"id": "00C11350","ssid": "GoodAP","psw": "12345678","ip": "127.0.0.1","mac": "5C:CF:7F:C1:13:50","rssi": -32,"batmv": 1,"levpp": 0}';
+        $array = json_decode($data,true);
+        if(!$array){
+            $connection->send('wrong msg format');
+            $connection->close();
+        }
+//        foreach ($array as $item=>$value){
+//            $connection->send($item.">".$value);
+//        }
         //
         $device = Device::where('ip', $connection->getRemoteIp())->find();
         $device->unique_id = $array['id'];
@@ -104,12 +111,10 @@ class Worker extends Server
 
         // 有新的客户端连接时，连接数+1
         ++$this->connection_count;
-//        $test = new Test();
-//        $test->connection = $connection->id;
-//        $test->name = 'Jo';
-//        $test->save();
-        if (Device::where('ip', $connection->getRemoteIp())->find()){
 
+        if ($device = Device::where('ip', $connection->getRemoteIp())->find()){
+            $device->online = 1;
+            $device->save();
         }else{
             $device = new Device();
             $device->ip = $connection->getRemoteIp();
@@ -130,6 +135,7 @@ class Worker extends Server
         $this->connection_count--;
         $device = Device::where('ip', $connection->getRemoteIp())->find();
         $device->online = 0;
+        $device->save();
 //        echo '断开';
         $connection->send('协议连接已断开');
 //        echo("<script>console.log('我收到你的信息了');</script>");
@@ -177,6 +183,7 @@ class Worker extends Server
      * 油箱满后邮件通知用户
      */
     private function send_mail() {
+
         $url = 'http://api.sendcloud.net/apiv2/mail/send';
         $API_USER = 'Jonet_test_tjXKtf';
         $API_KEY = '89AUbwztLA8aFdKN';
@@ -208,7 +215,7 @@ class Worker extends Server
                                              <div style="border-top:1px dashed #ccc;margin:20px"></div>
                                          </td>
                                      </tr>
-                                   
+
                                  </tbody></table>
                              </td>
                          </tr>
