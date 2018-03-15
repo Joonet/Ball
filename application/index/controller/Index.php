@@ -18,14 +18,15 @@ class Index
         }
     }
 
-    public function test(){
-        // 建立socket连接到内部推送端口1234567890
+    public function test($id){
+        $id = $_GET['id'];
+        // 建立socket连接到内部推送端口
         $client = stream_socket_client('tcp://127.0.0.1:5678');
 // 推送的数据，包含uid字段，表示是给这个uid推送
-        $data = array('uid'=>'uid1', 'percent'=>'88%');
+//        $data = array('uid'=>'uid1', 'percent'=>'88%');
 // 发送数据，注意5678端口是Text协议的端口，Text协议需要在数据末尾加上换行符
-        fwrite($client, json_encode($data)."\n");
-        // 读取推送结果
+        fwrite($client, $id."\n");
+// 读取推送结果
         echo fread($client, 8192);
     }
 
@@ -89,6 +90,4 @@ blockquote{margin-right:0px}
 
         return $result;
     }
-
-
 }
