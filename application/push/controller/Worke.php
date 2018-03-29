@@ -71,7 +71,7 @@ class Worke extends Server
             $connection->close();
         }
 
-        $device = Device::where('ip', $connection->getRemoteIp())->find();
+        $device = Device::where('private_ip', $connection->getRemoteIp())->find();
         $device->unique_id = $array['id'];
         $device->ssid = $array['ssid'];
         $device->psw = $array['psw'];
@@ -132,7 +132,7 @@ class Worke extends Server
     {
         // 客户端关闭时，连接数-1
         $this->connection_count--;
-        $device = Device::where('ip', $connection->getRemoteIp())->find();
+        $device = Device::where('private_ip', $connection->getRemoteIp())->find();
         $device->online = 0;
         $device->connection_id = -1;
         $device->save();
