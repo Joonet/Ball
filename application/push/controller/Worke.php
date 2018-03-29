@@ -109,13 +109,13 @@ class Worke extends Server
         // 有新的客户端连接时，连接数+1
         ++$this->connection_count;
 
-        if ($device = Device::where('ip', $connection->getRemoteIp())->find()){
+        if ($device = Device::where('private_ip', $connection->getRemoteIp())->find()){
             $device->online = 1;
             $device->connection_id = $connection->id;
             $device->save();
         }else{
             $device = new Device();
-            $device->ip = $connection->getRemoteIp();
+            $device->private_ip = $connection->getRemoteIp();
             $device->connection_id = $connection->id;
             $device->save();
         }
