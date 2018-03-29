@@ -75,7 +75,7 @@ class Worke extends Server
         $device->unique_id = $array['id'];
         $device->ssid = $array['ssid'];
         $device->psw = $array['psw'];
-        $device->ip = $array['ip'];
+        $device->private_ip = $array['ip'];
         $device->mac = $array['mac'];
         $device->rssi = $array['rssi'];
         $device->batmv = $array['batmv'];
