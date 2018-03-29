@@ -25,22 +25,6 @@ class Worke extends Server
 
     protected $socket = 'tcp://0.0.0.0:2347';
 
-    // 全局变量，保存当前进程的客户端连接数
-    private $connection_count = 0;
-
-
-    /**
-     *
-     *
-     * 错误
-     * failed: Error in connection establishment: net::ERR_CONNECTION_TIMED_OUT
-     * Uncaught SyntaxError: Unexpected token
-     */
-
-
-
-
-
 
     /**
      * 收到信息
@@ -57,6 +41,7 @@ class Worke extends Server
     "batmv": 1,     //电池电压
     "levpp": 0      //液位百分比
     }
+     * {"id": "00C11350","ssid": "JoP","psw": "12345678","ip": "000000","mac": "5C5445513:50","rssi": -32,"batmv": 1,"levpp": 0}
      *
      * online
      */
@@ -64,24 +49,32 @@ class Worke extends Server
     {
         // 给connection临时设置一个lastMessageTime属性，用来记录上次收到消息的时间
         $connection->lastMessageTime = time();
-//        $arr = '{"id": "00C11350","ssid": "GoodAP","psw": "12345678","ip": "127.0.0.1","mac": "5C:CF:7F:C1:13:50","rssi": -32,"batmv": 1,"levpp": 0}';
+
         $array = json_decode($data,true);
         if(!$array){
-            $connection->send('wrong msg format'.'当前连接数为：'.count($this->worker->connections));
-            $connection->close();
-        }
+            $connection->send('{"code":400, "msg":"数据格式有误，请确认后继续发送"}');
+            return;
+        }else{
+            $device=null;
+            if (Device::where('mac', $array['mac'])->find()){
+                $device = Device::where('mac', $array['mac'])->find();
+            }else{
+                $device = new Device();
+            }
+            $device->unique_id = $array['id'];
+            $device->ssid = $array['ssid'];
+            $device->psw = $array['psw'];
+            $device->private_ip = $array['ip'];
+            $device->mac = $array['mac'];
+            $device->rssi = $array['rssi'];
+            $device->batmv = $array['batmv'];
+            $device->levpp = $array['levpp'];
+            $device->online = 1;
+            $device->public_ip = $connection->getRemoteIp();
+            $device->connection_id = $connection->id;
+            $device->save();
 
-        $device = Device::where('private_ip', $connection->getRemoteIp())->find();
-        $device->unique_id = $array['id'];
-        $device->ssid = $array['ssid'];
-        $device->psw = $array['psw'];
-        $device->private_ip = $array['ip'];
-        $device->mac = $array['mac'];
-        $device->rssi = $array['rssi'];
-        $device->batmv = $array['batmv'];
-        $device->levpp = $array['levpp'];
-        $device->online = 1;
-        $device->save();
+        }
 
         //获取液位值，若为1，则桶满，发送邮件
         if ($array['levpp'] == 1){
@@ -90,7 +83,7 @@ class Worke extends Server
             $connection->send('邮件已发送');
 
         }
-        $connection->send('我收到你的信息了'.$data.'\n'.'当前连接数为：'.$this->connection_count);
+        $connection->send('{"code":200, "msg":"已收到消息"}');
         //解析data数据（json格式）
 
 
@@ -105,23 +98,6 @@ class Worke extends Server
     public function onConnect($connection)
     {
 
-        $this->port = '789789789789';
-        // 有新的客户端连接时，连接数+1
-        ++$this->connection_count;
-
-        if ($device = Device::where('private_ip', $connection->getRemoteIp())->find()){
-            $device->online = 1;
-            $device->connection_id = $connection->id;
-            $device->save();
-        }else{
-            $device = new Device();
-            $device->private_ip = $connection->getRemoteIp();
-            $device->connection_id = $connection->id;
-            $device->save();
-        }
-
-
-
     }
 
     /**
@@ -130,12 +106,14 @@ class Worke extends Server
      */
     public function onClose($connection)
     {
-        // 客户端关闭时，连接数-1
-        $this->connection_count--;
-        $device = Device::where('private_ip', $connection->getRemoteIp())->find();
-        $device->online = 0;
-        $device->connection_id = -1;
-        $device->save();
+        if ($device = Device::where('connection_id', $connection->id)->find()){
+            $device->online = 0;
+            $device->connection_id = -1;
+            $device->save();
+        }elseif ($device = Device::where('unique_id', 00000)->find()){
+            $device->delete();
+        }
+
 //        echo '断开';
         $connection->send('协议连接已断开');
 //        echo("<script>console.log('我收到你的信息了');</script>");
@@ -230,7 +208,7 @@ class Worke extends Server
             'apiKey' => $API_KEY,
             'from' => 'jo@sendcloud.org', # 发信人，用正确邮件地址替代
             'fromName' => 'PREC_Jo',
-            'to' => 'jo@precintl.com;elegzh@yeah.net;sky@precintl.com',# 收件人地址, 用正确邮件地址替代, 多个地址用';'分隔
+            'to' => 'jo@precintl.com;elegzh@yeah.net;sky@precintl.com;kevin@precintl.com',# 收件人地址, 用正确邮件地址替代, 多个地址用';'分隔
             'subject' => '油桶溢满警告_测试',
             'html' => '<tbody>
                          <tr>
