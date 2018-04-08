@@ -76,7 +76,9 @@ class Worke extends Server
                 $device->connection_id = $connection->id;
                 $device->save();
             } catch (\Exception $e) {
-                $connection->send("{"code":404, "msg":$e->getMessage()}");
+                $code = "code";
+                $msg = "msg";
+                $connection->send("{ $code:404, $msg:$e->getMessage()}");
             }
         }
 
