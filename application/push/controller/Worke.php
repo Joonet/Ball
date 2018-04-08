@@ -19,7 +19,7 @@ use Workerman\Worker;
 
 
 // 心跳间隔25秒
-define('HEARTBEAT_TIME', 120);
+define('HEARTBEAT_TIME', 60);
 class Worke extends Server
 {
 
@@ -61,19 +61,23 @@ class Worke extends Server
             }else{
                 $device = new Device();
             }
-            $device->unique_id = $array['id'];
-            $device->ssid = $array['ssid'];
-            $device->psw = $array['psw'];
-            $device->private_ip = $array['ip'];
-            $device->mac = $array['mac'];
-            $device->rssi = $array['rssi'];
-            $device->batmv = $array['batmv'];
-            $device->levpp = $array['levpp'];
-            $device->online = 1;
-            $device->public_ip = $connection->getRemoteIp();
-            $device->connection_id = $connection->id;
-            $device->save();
 
+            try {
+                $device->unique_id = $array['id'];
+                $device->ssid = $array['ssid'];
+                $device->psw = $array['psw'];
+                $device->private_ip = $array['ip'];
+                $device->mac = $array['mac'];
+                $device->rssi = $array['rssi'];
+                $device->batmv = $array['batmv'];
+                $device->levpp = $array['levpp'];
+                $device->online = 1;
+                $device->public_ip = $connection->getRemoteIp();
+                $device->connection_id = $connection->id;
+                $device->save();
+            } catch (\Exception $e) {
+                $connection->send("{"code":404, "msg":$e->getMessage()}");
+            }
         }
 
         //获取液位值，若为1，则桶满，发送邮件
@@ -85,9 +89,6 @@ class Worke extends Server
         }
         $connection->send('{"code":200, "msg":"已收到消息"}');
         //解析data数据（json格式）
-
-
-
 
     }
 
