@@ -189,7 +189,7 @@ class Worke extends Server
         }
 //        $connection->send($this->worker->connections[0]->id);
         if (isset($this->worker->connections[$uid])){
-            $this->worker->connections[$uid]->send($message);
+            $this->worker->connections[$uid]->send('mute\n');
             return true;
         }
         return false;

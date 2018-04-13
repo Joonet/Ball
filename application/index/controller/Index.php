@@ -28,6 +28,7 @@ class Index
         fwrite($client, $id."\n");
 // 读取推送结果
         echo fread($client, 8192);
+
     }
 
     public function send_mail() {
