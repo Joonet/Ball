@@ -83,7 +83,7 @@ class Worke extends Server
         }
 
         //获取液位值，若为1，则桶满，发送邮件
-        if ($array['levpp'] == 1){
+        if ($array['levpp'] == 100){
 
             $this->send_mail();
             $connection->send('邮件已发送');
@@ -189,8 +189,8 @@ class Worke extends Server
         }
 //        $connection->send($this->worker->connections[0]->id);
         if (isset($this->worker->connections[$uid])){
-            $this->worker->connections[$uid]->send('mute\n');
-            
+            $this->worker->connections[$uid]->send("MUTE\n");
+
             return true;
         }
         return false;
