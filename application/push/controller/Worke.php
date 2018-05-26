@@ -20,12 +20,14 @@ use Workerman\Worker;
 
 // 心跳间隔25秒
 define('HEARTBEAT_TIME', 60);
+//警告液位值
+define('ALERT_VALUE', 100);
 class Worke extends Server
 {
 
     protected $socket = 'tcp://0.0.0.0:2347';
 
-
+    private $isMessageSentWhenFull  = false;
     /**
      * 收到信息
      * @param $connection
@@ -82,9 +84,14 @@ class Worke extends Server
             }
         }
 
-        //获取液位值，若为1，则桶满，发送邮件
-        if ($array['levpp'] == 100){
+        //液位值低于100 则重置判断条件
+        if ($array['levpp'] < ALERT_VALUE && $this->isMessageSentWhenFull) {
+            $this->isMessageSentWhenFull = false;
+        }
 
+        //获取液位值，若为100，则桶满，发送邮件；若持续接收到100，避免重复发送
+        if ($array['levpp'] == ALERT_VALUE && $this->isMessageSentWhenFull == false){
+            $this->isMessageSentWhenFull = true;
             $this->send_mail();
             $connection->send('邮件已发送');
 

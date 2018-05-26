@@ -6,11 +6,11 @@ use app\admin\model\Device;
 
 class Index
 {
-    public function index()
+    public function index($id = 1)
     {
-        if ($device = Device::where('id', 1)->find()) {
+        if ($device = Device::where('id', $id)->find()) {
             return $device;
         }
-        return 'nothing';
+        return 'no device';
     }
 }
